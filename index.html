@@ -1,0 +1,662 @@
+<title>放開免疫的煞車</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 一張 H&E 染色玻片般的舞台，上方分幕標籤、中間動畫、下方說明與新聞時間軸 */
+:root{
+  --bg:#f3ecf2; --panel:#ffffff; --stagebg:#fbf6fa; --ink:#2a1b33; --muted:#6c5a77; --line:#e3d4e0; --accent:#5b3c8c;
+  --tcell:#1f8a8a; --tcell-dim:#9aa5a8; --tumor:#c2417a; --cold:#6f86b0; --dc:#7d6a9e;
+  --pd1:#e0702f; --pdl1:#8e2457; --ctla4:#cf3a47; --cd28:#2f9e57; --b7:#ad8616; --lag3:#7f52cc;
+  --mhc:#8e2457; --tcr:#1d6688; --drug:#2457c5; --granule:#c08f00;
+  --vessel:#f6dadd; --rbc:#c8414b; --brain:#f2e7ef; --endo:#e8c3cc; --macro:#9e93a6;
+  --good:#23824a; --bad:#c4313e;
+  --f-display:"Noto Sans TC",system-ui,sans-serif; --f-body:"Noto Sans TC",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17111c; --panel:#221a2a; --stagebg:#1d1524; --ink:#f1e8f2; --muted:#b4a4bd; --line:#3a2d44; --accent:#b99de8;
+  --tcell:#3cc0be; --tcell-dim:#5f6b6e; --tumor:#e2649a; --cold:#8aa2d0; --dc:#a593c8;
+  --pd1:#f29360; --pdl1:#d4588e; --ctla4:#f06a72; --cd28:#5bc97e; --b7:#e0bc4a; --lag3:#ae8bf0;
+  --mhc:#d4588e; --tcr:#5ab0d0; --drug:#79a2ff; --granule:#f2cf4a;
+  --vessel:#3a1d26; --rbc:#a83a44; --brain:#211a29; --endo:#4c2c38; --macro:#6f6378;
+  --good:#5bc97e; --bad:#f06a72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17111c; --panel:#221a2a; --stagebg:#1d1524; --ink:#f1e8f2; --muted:#b4a4bd; --line:#3a2d44; --accent:#b99de8;
+  --tcell:#3cc0be; --tcell-dim:#5f6b6e; --tumor:#e2649a; --cold:#8aa2d0; --dc:#a593c8;
+  --pd1:#f29360; --pdl1:#d4588e; --ctla4:#f06a72; --cd28:#5bc97e; --b7:#e0bc4a; --lag3:#ae8bf0;
+  --mhc:#d4588e; --tcr:#5ab0d0; --drug:#79a2ff; --granule:#f2cf4a;
+  --vessel:#3a1d26; --rbc:#a83a44; --brain:#211a29; --endo:#4c2c38; --macro:#6f6378;
+  --good:#5bc97e; --bad:#f06a72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75}
+.wrap{max-width:1060px;margin:0 auto;padding-block:36px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.eyebrow{font-family:var(--f-mono);font-size:13px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(2rem,5.4vw,3.4rem);line-height:1.15;margin:.2em 0 .35em;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--tumor)}
+.lead{max-width:68ch;color:var(--muted);margin:0;font-size:17px}
+.lead b{color:var(--ink);font-weight:700}
+h2{font-family:var(--f-display);font-weight:900;font-size:1.5rem;line-height:1.3;margin:0 0 .5em;text-wrap:balance}
+h3{font-size:1rem;margin:0 0 .4em;font-weight:700}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.tab{flex:1 0 150px;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;line-height:1.4;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.tab .n{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em}
+.tab .t{font-weight:700;color:var(--ink)}
+.tab[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent)}
+.tab[aria-selected="true"] .n{color:var(--accent)}
+.tab:focus-visible,.btn:focus-visible,.toggle:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+canvas{display:block;width:100%;aspect-ratio:16/9;max-width:100%;background:var(--stagebg)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 16px;border-top:1px solid var(--line)}
+.btn{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--stagebg);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+#scrub{flex:1 1 160px;min-width:0;accent-color:var(--accent)}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 100%}
+.toggle{font:inherit;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--drug);color:var(--drug);background:transparent;border-radius:999px;padding:6px 14px;cursor:pointer}
+.toggle .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--drug)}
+.toggle[aria-pressed="true"]{background:var(--drug);color:var(--panel)}
+.toggle[aria-pressed="true"] .dot{background:var(--panel);border-color:var(--panel)}
+.toggle.surgery{border-color:var(--tumor);color:var(--tumor)}
+.toggle.surgery .dot{border-color:var(--tumor)}
+.toggle.surgery[aria-pressed="true"]{background:var(--tumor);color:var(--panel)}
+.toggle.surgery[aria-pressed="true"] .dot{background:var(--panel);border-color:var(--panel)}
+.note{font-size:14px;color:var(--muted)}
+
+.explain{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;align-items:start}
+.explain p{margin:0 0 .8em;max-width:65ch}
+.explain .who{font-family:var(--f-mono);font-size:13px;color:var(--accent);margin-bottom:.4em}
+.watch{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.watch ol{margin:0;padding-left:1.3em;font-size:15px;color:var(--muted)}
+.watch li{margin-bottom:.35em}
+.watch li b{color:var(--ink)}
+.next{margin-top:12px}
+.term{font-family:var(--f-mono);font-size:.92em;font-weight:600;white-space:nowrap}
+.c-tcell{color:var(--tcell)}.c-tumor{color:var(--tumor)}.c-pd1{color:var(--pd1)}.c-pdl1{color:var(--pdl1)}.c-ctla4{color:var(--ctla4)}.c-cd28{color:var(--cd28)}.c-b7{color:var(--b7)}.c-lag3{color:var(--lag3)}.c-drug{color:var(--drug)}
+
+.news{border-top:1px solid var(--line);padding-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:28px}
+.news p{margin:0 0 .8em;max-width:65ch}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.tl time{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-variant-numeric:tabular-nums;padding-top:2px}
+.tl li.end time{color:var(--tumor)}
+.caveat{font-size:14px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.src{font-size:13px;color:var(--muted)}
+.src a{color:var(--accent)}
+.src ul{padding-left:1.2em;margin:.3em 0 0}
+@media (max-width:760px){.explain,.news{grid-template-columns:minmax(0,1fr)}.tab{flex-basis:128px}}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">圖解・免疫檢查點抑制劑</div>
+    <h1>放開免疫的煞車：<em>Scolyer</em> 對腦癌的實驗</h1>
+    <p class="lead">2023 年，澳洲病理學家 <b>Richard Scolyer</b> 被診斷出最兇猛的腦癌「膠質母細胞瘤」。他決定拿自己做實驗：開刀前先注射三種<b>免疫檢查點抑制劑</b>。這類藥的原理，來自 2018 年諾貝爾獎得主 <b>James Allison</b> 與 <b>本庶佑</b> 的發現。下面用六幕動畫，一步一步拆解它怎麼運作。</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="動畫分幕" id="tabs"></nav>
+
+  <section class="stage" aria-label="機制動畫">
+    <canvas id="cv" role="img" aria-label="免疫細胞與癌細胞互動的動畫"></canvas>
+    <div class="controls">
+      <button class="btn" id="play" type="button">暫停</button>
+      <button class="btn" id="restart" type="button">重播</button>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="拖曳時間軸">
+      <div class="toggles" id="toggles"></div>
+    </div>
+  </section>
+
+  <section class="explain">
+    <div id="text"></div>
+    <aside class="watch">
+      <h3>這一幕請看</h3>
+      <ol id="watch"></ol>
+      <button class="btn next" id="next" type="button">下一幕 →</button>
+    </aside>
+  </section>
+
+  <section class="news">
+    <div>
+      <div class="eyebrow">新聞背景</div>
+      <h2>一位醫師拿自己當第一個病人</h2>
+      <p>Scolyer 和同事 Georgina Long 在雪梨的澳洲黑色素瘤研究所（Melanoma Institute Australia）合作多年。他們證明，黑色素瘤病人如果在<b>手術前</b>先接受免疫治療，效果比術後才用更好。</p>
+      <p>他確診膠質母細胞瘤後，兩人把這套策略搬到腦癌上，成為全世界第一例。他公開分享病情，募集研究經費，也讓更多人認識這類藥物。</p>
+      <p class="caveat">這是<b>單一病例</b>。他確診後活了將近三年，比多數病人預期的一年多長，但一個病例無法證明是療法的功勞，仍需要正式的臨床試驗確認。免疫治療也可能讓免疫系統攻擊正常器官，引發結腸炎、肝炎、甲狀腺問題等副作用。</p>
+    </div>
+    <div>
+      <ol class="tl">
+        <li><time>1992</time><span>本庶佑團隊發現 T 細胞上的 <span class="term c-pd1">PD-1</span>。</span></li>
+        <li><time>1996</time><span>Allison 團隊證明阻斷 <span class="term c-ctla4">CTLA-4</span> 能讓小鼠腫瘤消退。</span></li>
+        <li><time>2011</time><span>第一個檢查點抑制劑 ipilimumab（抗 CTLA-4）在美國核准治療黑色素瘤。</span></li>
+        <li><time>2014</time><span>抗 PD-1 藥物 nivolumab、pembrolizumab 陸續上市。</span></li>
+        <li><time>2018</time><span>Allison 與本庶佑共同獲得諾貝爾生理醫學獎。</span></li>
+        <li><time>2022</time><span>relatlimab（抗 <span class="term c-lag3">LAG-3</span>）加 nivolumab 的組合在美國核准治療黑色素瘤。</span></li>
+        <li><time>2023.06</time><span>Scolyer 確診膠質母細胞瘤，術前接受三藥合併免疫治療後開刀。</span></li>
+        <li><time>2023–24</time><span>另外接受依照自己腫瘤基因製作的個人化癌症疫苗。</span></li>
+        <li><time>2024.01</time><span>與 Georgina Long 共同獲選「澳洲年度人物」。</span></li>
+        <li><time>2024.05</time><span>公布治療一年後仍未復發，切下的腫瘤中免疫細胞明顯增加。</span></li>
+        <li><time>2025.03</time><span>宣布腫瘤復發。</span></li>
+        <li><time>2025</time><span>他的病例報告刊登於《Nature Medicine》。</span></li>
+        <li class="end"><time>2026.06.07</time><span>Scolyer 過世，享年 59 歲。澳洲政府以他的名字設立腦癌研究講座。</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="src">
+    本頁為科普示意，動畫中的強度與數量不是臨床數據，也不構成醫療建議。資料來源：
+    <ul>
+      <li><a href="https://en.wikipedia.org/wiki/Richard_Scolyer" target="_blank" rel="noopener">Wikipedia：Richard Scolyer</a></li>
+      <li><a href="https://www.the-scientist.com/cancer-researcher-and-pathologist-richard-scolyer-dies-at-59-74605" target="_blank" rel="noopener">The Scientist：Richard Scolyer dies at 59</a></li>
+      <li><a href="https://insightplus.mja.com.au/2026/23/richard-scolyer-leaves-a-unique-legacy-of-pioneering-brain-cancer-research" target="_blank" rel="noopener">MJA InSight：Scolyer 的腦癌研究遺產</a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/40779733/" target="_blank" rel="noopener">Nature Medicine 2025：Neoadjuvant triplet immune checkpoint blockade in newly diagnosed glioblastoma</a></li>
+      <li><a href="https://www.rnz.co.nz/news/world/516784/australian-of-the-year-richard-scolyer-blown-away-by-success-of-radical-new-brain-cancer-treatment" target="_blank" rel="noopener">RNZ 2024：Scolyer 公布治療一年後的結果</a></li>
+      <li><a href="https://www.doi.org/10.1038/S41586-018-0792-9" target="_blank" rel="noopener">Nature 2018：膠質母細胞瘤個人化新抗原疫苗一期試驗</a></li>
+      <li><a href="https://www.uclahealth.org/news/release/scientists-identify-clues-making-immunotherapy-more" target="_blank" rel="noopener">UCLA Health：術前雙藥免疫治療與膠質母細胞瘤</a></li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+(()=>{
+const W=960,H=540;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let S=1;
+function resize(){const w=cv.clientWidth||960;const dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(w*dpr);cv.height=Math.round(w*9/16*dpr);S=cv.width/W;}
+new ResizeObserver(resize).observe(cv);resize();
+
+/* ---------- tokens ---------- */
+const C={};
+const TOK=['bg','panel','stagebg','ink','muted','line','accent','tcell','tcellDim','tumor','cold','dc','pd1','pdl1','ctla4','cd28','b7','lag3','mhc','tcr','drug','granule','vessel','rbc','brain','endo','macro','good','bad'];
+function readTokens(){const cs=getComputedStyle(document.documentElement);TOK.forEach(k=>{C[k]=cs.getPropertyValue('--'+k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())).trim()||'#888888';});}
+readTokens();
+
+/* ---------- utils ---------- */
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const lerp=(a,b,k)=>a+(b-a)*k;
+function rgbOf(c){if(c.startsWith('rgb'))return c.match(/[\d.]+/g).slice(0,3).map(Number);c=c.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');return[0,2,4].map(i=>parseInt(c.substr(i,2),16));}
+function mix(a,b,k){const A=rgbOf(a),B=rgbOf(b);return`rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],k))).join(',')})`;}
+function rgba(c,a){const A=rgbOf(c);return`rgba(${A.join(',')},${a})`;}
+const tR=(cx,r,dy)=>cx+Math.sqrt(Math.max(0,r*r-dy*dy)); // right membrane
+const tL=(cx,r,dy)=>cx-Math.sqrt(Math.max(0,r*r-dy*dy)); // left membrane
+
+let clock=0;
+function blob(x,y,r,fill,stroke,seed=0,wob=.035,lw=3){
+  ctx.beginPath();const N=56;
+  for(let i=0;i<=N;i++){const a=i/N*Math.PI*2;const rr=r*(1+wob*Math.sin(3*a+seed+clock*.9)+wob*.6*Math.sin(5*a-seed*1.7+clock*1.3));const px=x+rr*Math.cos(a),py=y+rr*Math.sin(a);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=lw;ctx.strokeStyle=stroke;ctx.stroke();}
+}
+function drawCell(x,y,r,col,seed=0,o={}){
+  const alpha=o.alpha??1,glow=o.glow??0;
+  if(alpha<=0)return;
+  ctx.save();ctx.globalAlpha*=alpha;
+  if(glow>0){const g=ctx.createRadialGradient(x,y,r*.85,x,y,r*1.6);g.addColorStop(0,rgba(col,.45*glow));g.addColorStop(1,rgba(col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.6,0,7);ctx.fill();}
+  blob(x,y,r,mix(col,C.stagebg,.74),col,seed,.035,r<20?2:3);
+  blob(x-r*.14,y+r*.06,r*.42,mix(col,C.stagebg,.42),null,seed+2,.06);
+  ctx.restore();
+}
+function rec(x,y,dir,len,col,head='ball'){
+  const ex=x+dir*len;
+  ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,y);ctx.stroke();
+  if(head==='ball'){ctx.beginPath();ctx.arc(ex,y,6.5,0,7);ctx.fill();}
+  else if(head==='fork'){ctx.beginPath();ctx.moveTo(ex,y);ctx.lineTo(ex+dir*9,y-8);ctx.moveTo(ex,y);ctx.lineTo(ex+dir*9,y+8);ctx.stroke();}
+  else if(head==='cup'){ctx.beginPath();ctx.arc(ex+dir*7,y,8,dir>0?Math.PI*.5:-Math.PI*.5,dir>0?Math.PI*1.5:Math.PI*.5,false);ctx.stroke();}
+  ctx.restore();return ex;
+}
+function antibody(x,y,ang,alpha=1){ // grab point at (x,y); ang=0 → stem points up
+  if(alpha<=0)return;
+  ctx.save();ctx.globalAlpha*=alpha;ctx.translate(x,y);ctx.rotate(ang);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const [w,c] of [[10,C.panel],[6,C.drug]]){
+    ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+    ctx.moveTo(-11,-1);ctx.lineTo(0,-16);ctx.lineTo(11,-1);ctx.moveTo(0,-16);ctx.lineTo(0,-42);ctx.stroke();
+  }
+  ctx.restore();
+}
+function label(text,x,y,col,o={}){
+  ctx.save();ctx.font=`${o.weight||600} ${o.size||15}px ${o.mono?'"IBM Plex Mono",ui-monospace,monospace':'"Noto Sans TC",system-ui,sans-serif'}`;
+  ctx.fillStyle=col;ctx.textAlign=o.align||'center';ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore();
+}
+function pill(text,x,y,col,a=1){
+  if(a<=0)return;
+  ctx.save();ctx.globalAlpha*=a;ctx.font='700 19px "Noto Sans TC",system-ui,sans-serif';
+  const w=ctx.measureText(text).width+30,h=38,left=clamp(x-w/2,8,W-8-w);
+  ctx.fillStyle=C.panel;ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(left,y-h/2,w,h,19);ctx.fill();ctx.stroke();
+  ctx.fillStyle=col;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(text,left+15,y+1);ctx.restore();
+}
+const win=(t,a,b,f=.03)=>t<a||t>b?0:Math.min(seg(t,a,a+f),1-seg(t,b-f,b));
+function ring(x,y,p,col){if(p<=0||p>=1)return;ctx.save();ctx.globalAlpha*=1-p;ctx.strokeStyle=col;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,8+30*p,0,7);ctx.stroke();ctx.restore();}
+
+/* ---------- state ---------- */
+const state={nivo:false,ipi:false,c4:{nivo:false,ipi:false,rela:false},s5:{drug:false,surgery:false}};
+let scene=0,phase=0,playing=true;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- scene 1 & 2: attack / PD-1 brake ---------- */
+const TC={r:62,x0:150,x1:440,y:270},TU={x:650,y:270,R:115};
+const gapAt=dy=>tL(TU.x,TU.R,dy)-tR(TC.x1,TC.r,dy);
+function sceneAttack(t,withPD){
+  const drug=withPD&&state.nivo;
+  ctx.save();ctx.globalAlpha=Math.min(seg(t,0,.035),1-seg(t,.94,1));
+  const ap=ease(seg(t,0,.28));
+  const braked=withPD&&!drug&&t>=.33;
+  let cx=lerp(TC.x0,TC.x1,ap);
+  if(braked)cx-=34*ease(seg(t,.62,.84));
+  const killing=!(withPD&&!drug);
+  const dmg=killing?ease(seg(t,.55,.86)):0;
+  const R=TU.R*(1-.2*dmg);
+  // tumor
+  drawCell(TU.x,TU.y,R,C.tumor,1.3,{alpha:1-.55*dmg});
+  if(dmg>0){ctx.save();ctx.globalAlpha*=dmg;ctx.strokeStyle=C.tumor;ctx.lineWidth=3;ctx.lineCap='round';
+    [[.3,.8],[1.4,.7],[2.6,.85],[3.7,.6],[4.8,.75],[5.6,.7]].forEach(([a,l])=>{ctx.beginPath();ctx.moveTo(TU.x+Math.cos(a)*R*.25,TU.y+Math.sin(a)*R*.25);ctx.lineTo(TU.x+Math.cos(a+.15)*R*l,TU.y+Math.sin(a+.15)*R*l);ctx.stroke();});ctx.restore();}
+  ctx.save();ctx.globalAlpha*=1-dmg;
+  rec(tL(TU.x,R,0),TU.y,-1,gapAt(0)/2,C.mhc,'cup');
+  if(withPD)for(const s of[-1,1])rec(tL(TU.x,R,40),TU.y+s*40,-1,gapAt(40)/2,C.pdl1,'cup');
+  ctx.restore();
+  // granules
+  if(killing)for(let i=0;i<12;i++){const st=.38+i*.02,p=seg(t,st,st+.13);if(p>0&&p<1){const e=ease(p);ctx.save();ctx.globalAlpha*=1-.4*p;ctx.fillStyle=C.granule;ctx.beginPath();ctx.arc(lerp(505,585+(i%4)*20,e),TU.y+((i*53)%70-35)*e,5.5,0,7);ctx.fill();ctx.restore();}}
+  // T cell
+  const dimK=braked?seg(t,.34,.5):0;
+  const tcol=mix(C.tcell,C.tcellDim,dimK);
+  drawCell(cx,TC.y,TC.r,tcol,.2,{glow:killing?seg(t,.28,.38)*(1-seg(t,.7,.9)):0});
+  rec(tR(cx,TC.r,0),TC.y,1,gapAt(0)/2,mix(C.tcr,C.tcellDim,dimK),'fork');
+  if(withPD)for(const s of[-1,1])rec(tR(cx,TC.r,40),TC.y+s*40,1,gapAt(40)/2,C.pd1,'ball');
+  // flashes
+  ring(tR(TC.x1,TC.r,0)+gapAt(0)/2,TC.y,seg(t,.28,.4),C.good);
+  if(braked&&t<.62)for(const s of[-1,1])ring(tR(cx,TC.r,40)+gapAt(40)/2,TC.y+s*40,((t-.33)*9)%1,C.bad);
+  // antibodies
+  if(drug){const k=ease(seg(t,0,.22));for(const s of[-1,1]){const hx=tR(cx,TC.r,40)+gapAt(40)/2-1,hy=TC.y+s*40;antibody(lerp(hx+40,hx,k),lerp(s<0?-60:H+60,hy,k),s<0?0:Math.PI);}}
+  // labels
+  label('T 細胞',cx,TC.y+TC.r+28,tcol,{size:17,weight:700});
+  label('癌細胞',TU.x,TU.y+R+30,C.tumor,{size:17,weight:700});
+  const la=seg(t,.15,.25);
+  ctx.save();ctx.globalAlpha*=la;
+  label('TCR',tR(cx,TC.r,0)-10,TC.y,mix(C.tcr,C.tcellDim,dimK),{align:'right',mono:true,size:14});
+  ctx.save();ctx.globalAlpha*=1-dmg;label('MHC＋抗原',tL(TU.x,R,0)+12,TU.y,C.mhc,{align:'left',size:14});ctx.restore();
+  if(withPD){for(const s of[-1,1]){label('PD-1',tR(cx,TC.r,40)-2,TC.y+s*62,C.pd1,{align:'right',mono:true,size:14});ctx.save();ctx.globalAlpha*=1-dmg;label('PD-L1',tL(TU.x,R,40)+4,TU.y+s*62,C.pdl1,{align:'left',mono:true,size:14});ctx.restore();}}
+  ctx.restore();
+  // captions
+  if(drug)pill('nivolumab 抗體先黏住 PD-1',480,56,C.drug,win(t,.02,.27));
+  if(killing){pill('TCR 認出抗原 → 發動攻擊',480,56,C.good,win(t,.28,.52));pill('釋放穿孔素與顆粒酶 → 癌細胞凋亡',480,56,C.tumor,win(t,.53,.93));}
+  else{pill('TCR 認出抗原…',480,56,C.good,win(t,.28,.34,.02));pill('PD-L1 接上 PD-1 → 煞車！T 細胞停火',480,56,C.bad,win(t,.34,.93));}
+  ctx.restore();
+}
+
+/* ---------- scene 3: CTLA-4 in lymph node ---------- */
+const DC={x:270,y:270,R:92};
+const CL=[[640,140],[730,110],[820,165],[650,400],[740,430],[830,375],[880,270]];
+function scenePrime(t){
+  const drug=state.ipi;
+  ctx.save();ctx.globalAlpha=Math.min(seg(t,0,.035),1-seg(t,.94,1));
+  // dendritic cell
+  const dcs=mix(C.dc,C.stagebg,.74);
+  [2.0,2.7,3.4,4.1,4.8,1.3,5.5].forEach((a,i)=>{const L=DC.R+42+10*Math.sin(clock*.8+i);for(const [w,c] of [[34,C.dc],[28,dcs]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(DC.x,DC.y);ctx.lineTo(DC.x+Math.cos(a)*L,DC.y+Math.sin(a)*L);ctx.stroke();}});
+  drawCell(DC.x,DC.y,DC.R,C.dc,.7);
+  const cx=lerp(830,454,ease(seg(t,0,.28)));
+  const bind=ease(seg(t,.3,.4));
+  const inert=!drug&&t>.42;
+  const dimK=inert?seg(t,.42,.56):0;
+  const tcol=mix(C.tcell,C.tcellDim,dimK);
+  // clones (behind main T)
+  if(drug)CL.forEach(([px,py],i)=>{const st=.5+i*.045,p=ease(seg(t,st,st+.14));if(p>0)drawCell(lerp(cx,px,p),lerp(DC.y,py,p),24*(.55+.45*p),C.tcell,i*1.7,{glow:.5*p});});
+  // DC molecules
+  rec(tR(DC.x,DC.R,0),DC.y,1,10,C.mhc,'cup');
+  // T cell
+  drawCell(cx,DC.y,TC.r,tcol,.4,{glow:drug?seg(t,.4,.5)*(1-seg(t,.85,.95)*.5):0});
+  rec(tL(cx,TC.r,0),DC.y,-1,12,mix(C.tcr,C.tcellDim,dimK),'fork');
+  const tips={};
+  for(const s of[-1,1]){
+    tips['cd'+s]=[rec(tL(cx,TC.r,34),DC.y+s*34,-1,10,C.cd28,'ball'),DC.y+s*34];
+    tips['ct'+s]=[rec(tL(cx,TC.r,54),DC.y+s*54,-1,30,C.ctla4,'ball'),DC.y+s*54];
+  }
+  // B7 ligands reach to the receptor that wins
+  for(const s of[-1,1]){
+    const sx=tR(DC.x,DC.R,42),sy=DC.y+s*42;
+    const tgt=drug?tips['cd'+s]:tips['ct'+s];
+    const ex=lerp(sx+14,tgt[0]-7,bind),ey=lerp(sy,tgt[1],bind);
+    ctx.save();ctx.strokeStyle=C.b7;ctx.fillStyle=C.b7;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ex+7,ey);ctx.lineTo(ex,ey-6);ctx.lineTo(ex-7,ey);ctx.lineTo(ex,ey+6);ctx.closePath();ctx.fill();ctx.restore();
+    ring(ex,ey,seg(t,.4,.52),drug?C.good:C.bad);
+  }
+  if(drug){const k=ease(seg(t,0,.22));for(const s of[-1,1]){const [hx,hy]=tips['ct'+s];antibody(lerp(hx+50,hx,k),lerp(s<0?-60:H+60,hy,k),s<0?0:Math.PI);}}
+  // labels
+  label('樹突細胞',DC.x-30,DC.y+DC.R+62,C.dc,{size:17,weight:700});
+  label('（淋巴結裡負責「教」T 細胞）',DC.x-30,DC.y+DC.R+86,C.muted,{size:13});
+  label('T 細胞',cx+40,DC.y+TC.r+40,tcol,{size:17,weight:700});
+  ctx.save();ctx.globalAlpha*=seg(t,.15,.25);
+  for(const s of[-1,1]){
+    label('B7',tR(DC.x,DC.R,42)-8,DC.y+s*42,C.b7,{align:'right',mono:true,size:14});
+    label('CD28',tL(cx,TC.r,34)+8,DC.y+s*34,C.cd28,{align:'left',mono:true,size:13});
+    label('CTLA-4',tL(cx,TC.r,54)+10,DC.y+s*80,C.ctla4,{align:'left',mono:true,size:14});
+  }
+  ctx.restore();
+  // captions
+  if(drug)pill('ipilimumab 抗體先堵住 CTLA-4',480,56,C.drug,win(t,.02,.27));
+  pill('TCR 認出抗原（訊號一）',480,56,C.good,win(t,.28,.42));
+  if(drug){pill('B7 改接 CD28（訊號二）→ 油門踩下！',480,56,C.good,win(t,.42,.6));pill('T 細胞活化，複製出大批同款殺手',480,56,C.tcell,win(t,.6,.93));}
+  else pill('CTLA-4 搶走 B7 → 油門沒踩下，T 細胞不活化',480,56,C.bad,win(t,.42,.93));
+  ctx.restore();
+}
+
+/* ---------- scene 4: triple combination ---------- */
+const dv={nivo:0,ipi:0,rela:0};let actS=.1;
+const TUMS=[[800,250],[878,250],[722,250],[839,318],[761,318],[839,182],[761,182]];
+const DIE=[6,0,1,2,3,4,5];
+const CLONE=[[520,140],[560,340],[610,225],[505,420],[640,110],[600,430],[530,255],[655,330],[475,80]];
+const BR=[{k:'nivo',name:'PD-1',dy:-52,col:'pd1',drug:'nivolumab'},{k:'ipi',name:'CTLA-4',dy:0,col:'ctla4',drug:'ipilimumab'},{k:'rela',name:'LAG-3',dy:52,col:'lag3',drug:'relatlimab'}];
+function sceneCombo(dt){
+  for(const k in dv)dv[k]+=((state.c4[k]?1:0)-dv[k])*Math.min(1,dt*2.5);
+  const act=.1+.35*dv.nivo+.3*dv.ipi+.2*dv.rela;actS+=(act-actS)*Math.min(1,dt*1.5);
+  const T={x:160,y:250,r:72};
+  // tumors
+  TUMS.forEach(([x,y],i)=>{const k=clamp((actS-.15-DIE[i]*.075)*2.4);drawCell(x,y,40*(1-.45*k),C.tumor,i*1.1,{alpha:1-.8*k});});
+  label('癌細胞',800,392,C.tumor,{size:17,weight:700});
+  // clones
+  const n=(actS-.1)/.85*CLONE.length;
+  CLONE.forEach(([x,y],i)=>{const a=clamp(n-i);if(a>0)drawCell(x+6*Math.sin(clock+i),y+5*Math.cos(clock*1.3+i),20,C.tcell,i,{alpha:a,glow:.4*a});});
+  // granules
+  const N=Math.floor(clamp((actS-.1)/.85)*16);
+  for(let i=0;i<N;i++){const p=(clock*.5+i/N)%1;const s=CLONE[i%Math.max(1,Math.ceil(n))]||CLONE[0];const tg=TUMS[(i*3)%7];ctx.save();ctx.globalAlpha*=(1-p)*.9;ctx.fillStyle=C.granule;ctx.beginPath();ctx.arc(lerp(s[0],tg[0],p),lerp(s[1],tg[1],p),4.5,0,7);ctx.fill();ctx.restore();}
+  // main T cell
+  const tcol=mix(C.tcellDim,C.tcell,clamp((actS-.1)/.85));
+  drawCell(T.x,T.y,T.r,tcol,.3,{glow:actS});
+  label('T 細胞',T.x,T.y+T.r+28,tcol,{size:17,weight:700});
+  BR.forEach(b=>{
+    const hx=rec(tR(T.x,T.r,b.dy),T.y+b.dy,1,22,C[b.col],'ball'),hy=T.y+b.dy;
+    const v=dv[b.k];antibody(lerp(hx+120,hx,ease(v)),lerp(hy-200,hy,ease(v)),Math.PI/2,v);
+    const lx=hx+56;
+    label(b.name,lx,hy-10,C[b.col],{align:'left',mono:true,size:15});
+    ctx.save();ctx.globalAlpha*=1-v;label(b.k==='ipi'?'煞車作用中（主要在淋巴結）':'煞車作用中',lx,hy+11,C.muted,{align:'left',size:13});ctx.restore();
+    ctx.save();ctx.globalAlpha*=v;label(`已被 ${b.drug} 擋住`,lx,hy+11,C.drug,{align:'left',size:13,weight:700});ctx.restore();
+  });
+  // gauge
+  const gx=230,gw=650,gy=482;
+  label('攻擊力（示意）',gx-16,gy,C.muted,{align:'right',size:15});
+  ctx.fillStyle=C.line;ctx.beginPath();ctx.roundRect(gx,gy-7,gw,14,7);ctx.fill();
+  ctx.fillStyle=tcol;ctx.beginPath();ctx.roundRect(gx,gy-7,gw*actS,14,7);ctx.fill();
+  label('弱',gx,gy+24,C.muted,{size:13});label('強',gx+gw,gy+24,C.muted,{size:13});
+  label('勾選下方的藥物，看看放開哪個煞車會發生什麼',480,40,C.muted,{size:16});
+}
+
+/* ---------- scene 5: brain, BBB, neoadjuvant ---------- */
+const TUM={x:540,y:362};
+const TB=[[0,0,82],[62,-28,54],[-66,-18,58],[-40,50,54],[52,52,50],[2,-58,48]];
+const MAC=[[372,250],[716,262],[392,478],[704,486]];
+const S5={tc:[],spawn:0,warm:0,gone:0,res:[]};
+function makeRes(){return[[430,300],[655,305],[438,430],[648,438],[545,268],[560,470]].map(([x,y])=>({x,y,r:10,hp:1}));}
+function reset5(){S5.tc=[];S5.spawn=0;S5.warm=0;S5.gone=state.s5.surgery?1:0;S5.res=makeRes();}
+function pickTarget(c){
+  const alive=S5.res.filter(r=>r.hp>0);
+  if(state.s5.surgery&&alive.length){const r=alive[Math.floor(Math.random()*alive.length)];c.tk='res';c.tr=r;const a=Math.random()*7;c.tx=r.x+Math.cos(a)*20;c.ty=r.y+Math.sin(a)*20;}
+  else if(!state.s5.surgery){c.tk='tumor';const a=Math.random()*7,d=Math.random()*85;c.tx=TUM.x+Math.cos(a)*d;c.ty=TUM.y+Math.sin(a)*d*.8;}
+  else{c.tk='wander';c.tx=200+Math.random()*560;c.ty=200+Math.random()*290;}
+}
+function update5(dt){
+  const drug=state.s5.drug,p=drug?.5:.07,cap=drug?24:4;
+  S5.spawn-=dt;if(S5.spawn<=0){S5.spawn=.28;S5.tc.push({x:-20,y:44+Math.random()*56,st:'flow',gate:100+Math.random()*760,dec:false,v:150+Math.random()*60,a:1,age:0});}
+  const inside=S5.tc.filter(c=>c.st==='mig'||c.st==='stay'||c.st==='cross');
+  for(const c of S5.tc){
+    c.age+=dt;
+    if(c.st==='flow'){c.x+=c.v*dt;if(!c.dec&&c.x>=c.gate){c.dec=true;if(Math.random()<p&&inside.length<cap){c.st='cross';c.k=0;c.y0=c.y;}}if(c.x>W+30)c.dead=true;}
+    else if(c.st==='cross'){c.k+=dt;c.y=lerp(c.y0,168,ease(clamp(c.k)));if(c.k>=1){c.st='mig';pickTarget(c);}}
+    else{
+      if((c.tk==='tumor'&&state.s5.surgery)||(c.tk==='res'&&(!state.s5.surgery||c.tr.hp<=0))||(c.tk==='wander'&&!state.s5.surgery))pickTarget(c);
+      const dx=c.tx-c.x,dy=c.ty-c.y,d=Math.hypot(dx,dy);
+      if(d>3){const sp=Math.min(d,75*dt);c.x+=dx/d*sp;c.y+=dy/d*sp;c.st='mig';}else{c.st='stay';if(c.tk==='wander'&&Math.random()<dt*.5)pickTarget(c);}
+    }
+    if(c.fade){c.a-=dt*.8;if(c.a<=0)c.dead=true;}
+  }
+  const inn=S5.tc.filter(c=>(c.st==='mig'||c.st==='stay')&&!c.fade);
+  if(inn.length>cap){inn.sort((a,b)=>b.age-a.age);inn[0].fade=true;}
+  S5.tc=S5.tc.filter(c=>!c.dead);
+  const inTumor=inn.filter(c=>c.tk==='tumor'&&c.st==='stay').length;
+  S5.warm+=(clamp(inTumor/9)-S5.warm)*Math.min(1,dt*1.2);
+  S5.gone+=((state.s5.surgery?1:0)-S5.gone)*Math.min(1,dt*1.5);
+  if(S5.gone>.8)for(const r of S5.res){if(r.hp<=0)continue;
+    if(drug){const near=inn.filter(c=>Math.hypot(c.x-r.x,c.y-r.y)<32).length;r.hp-=dt*.3*near;}
+    else r.r=Math.min(19,r.r+dt*1.1);}
+}
+function scene5(dt){
+  if(playing)update5(dt);
+  ctx.fillStyle=C.brain;ctx.fillRect(0,138,W,H-138);
+  ctx.fillStyle=C.vessel;ctx.fillRect(0,20,W,96);
+  for(let i=0;i<14;i++){const x=((i*83+clock*120)%(W+60))-30,y=40+(i*29)%60;ctx.fillStyle=rgba(C.rbc,.8);ctx.beginPath();ctx.ellipse(x,y,15,8,0,0,7);ctx.fill();}
+  for(let x=0;x<W;x+=64){ctx.fillStyle=C.endo;ctx.strokeStyle=mix(C.endo,C.ink,.25);ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(x+1,114,62,24,8);ctx.fill();ctx.stroke();ctx.fillStyle=mix(C.endo,C.ink,.5);ctx.fillRect(x+61,117,4,18);}
+  label('血管',16,34,C.rbc,{align:'left',size:15,weight:700});
+  label('血腦屏障：血管內壁細胞緊密接合',W-14,156,C.muted,{align:'right',size:13});
+  // macrophages
+  MAC.forEach(([x,y],i)=>drawCell(x,y,22,C.macro,i*2,{alpha:1-.5*S5.gone}));
+  ctx.save();ctx.globalAlpha*=1-.5*S5.gone;label('抑制型巨噬細胞',MAC[0][0],MAC[0][1]-36,C.muted,{size:13});ctx.restore();
+  // tumor mass
+  if(S5.gone<.99){const col=mix(C.cold,C.tumor,S5.warm);ctx.save();ctx.globalAlpha*=1-S5.gone;
+    TB.forEach(([dx,dy,r],i)=>blob(TUM.x+dx,TUM.y+dy,r,mix(col,C.stagebg,.7),col,i*1.3,.05,2.5));
+    TB.forEach(([dx,dy,r],i)=>blob(TUM.x+dx-r*.15,TUM.y+dy,r*.32,mix(col,C.stagebg,.4),null,i+3,.07));
+    label(S5.warm>.5?'腫瘤（變「熱」了）':'腫瘤（冷）',TUM.x,TUM.y-4,col,{size:17,weight:900});ctx.restore();}
+  // residual cells
+  if(S5.gone>.3)S5.res.forEach((r,i)=>{if(r.hp>0)drawCell(r.x,r.y,r.r*(.5+.5*r.hp),C.tumor,i,{alpha:seg(S5.gone,.3,.9)*(.3+.7*r.hp)});});
+  // T cells
+  for(const c of S5.tc){
+    if(c.st==='cross'&&c.k>.25&&c.k<.75){ctx.save();ctx.translate(c.x,c.y);ctx.scale(1.5,.55);drawCell(0,0,11,C.tcell,c.age,{alpha:c.a});ctx.restore();}
+    else drawCell(c.x,c.y,c.st==='flow'?10:12,C.tcell,c.age,{alpha:c.a*(c.st==='flow'?.9:1),glow:c.st!=='flow'&&state.s5.drug?.5:0});
+  }
+  const s=state.s5;
+  const msg=!s.surgery?(s.drug?['T 細胞先被活化，穿過血腦屏障湧入腫瘤',C.tcell]:['冷腫瘤：只有零星 T 細胞進得去',C.cold])
+                     :(s.drug?['開刀後，受過訓練的 T 細胞追殺殘餘癌細胞',C.good]:['只開刀：殘餘癌細胞慢慢重新長大',C.bad]);
+  pill(msg[0],480,514,msg[1]);
+}
+
+
+/* ---------- scene 6: personalised neoantigen vaccine ---------- */
+const NEO=['pd1','lag3','cd28'];
+function neo(x,y,i,s=9,a=1){
+  if(a<=0)return;ctx.save();ctx.globalAlpha*=a;ctx.fillStyle=i<0?C.macro:C[NEO[i]];ctx.strokeStyle=C.panel;ctx.lineWidth=1.5;ctx.beginPath();
+  if(i===0){ctx.moveTo(x,y-s);ctx.lineTo(x+s,y+s*.8);ctx.lineTo(x-s,y+s*.8);ctx.closePath();}
+  else if(i===1){ctx.rect(x-s*.8,y-s*.8,s*1.6,s*1.6);}
+  else if(i===2){ctx.moveTo(x,y-s);ctx.lineTo(x+s,y);ctx.lineTo(x,y+s);ctx.lineTo(x-s,y);ctx.closePath();}
+  else{ctx.arc(x,y,s*.85,0,7);}
+  ctx.fill();ctx.stroke();ctx.restore();
+}
+const SEQN='ATGCCAGTTACGGATC'.split('');
+const MUT={4:['T',0],9:['G',1],13:['C',2]};
+const SX=i=>52+i*14.5;
+const TUM6={x:840,y:230,R:66},NORM6={x:870,y:440,R:48},DC6={x:520,y:425,R:52};
+const P0=[[700,330],[730,410],[700,490]];
+const PD=[[610,370],[625,425],[610,480]];
+const PS=[[660,300],[700,330],[740,300],[680,380],[720,410],[760,380],[660,460],[700,490],[740,460]];
+const PT=Array.from({length:9},(_,i)=>{const a=Math.PI-1.1+i*.275;return[TUM6.x+108*Math.cos(a),TUM6.y+108*Math.sin(a)];});
+function scene6(t){
+  ctx.save();ctx.globalAlpha=Math.min(seg(t,0,.03),1-seg(t,.95,1));
+  // station titles & arrows
+  label('① 定序比對',160,106,C.accent,{size:15,weight:700});
+  ctx.save();ctx.globalAlpha*=seg(t,.17,.2);label('② 挑出新抗原',400,106,C.accent,{size:15,weight:700});label('→',292,200,C.muted,{size:24});ctx.restore();
+  ctx.save();ctx.globalAlpha*=seg(t,.35,.38);label('③ 製成疫苗',590,106,C.accent,{size:15,weight:700});label('→',505,200,C.muted,{size:24});ctx.restore();
+  // ① DNA compare
+  label('腫瘤細胞 DNA',40,148,C.tumor,{align:'left',size:13});
+  label('正常細胞 DNA',40,246,C.muted,{align:'left',size:13});
+  const scan=lerp(45,285,seg(t,.03,.17));
+  SEQN.forEach((b,i)=>{
+    const m=MUT[i],x=SX(i),hit=m&&scan>x;
+    if(hit){ctx.save();ctx.strokeStyle=C[NEO[m[1]]];ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-8,160,16,62,5);ctx.stroke();ctx.restore();}
+    label(m?m[0]:b,x,176,hit?C[NEO[m[1]]]:C.ink,{mono:true,size:15,weight:hit?700:500});
+    label(b,x,208,C.muted,{mono:true,size:15,weight:500});
+  });
+  if(t<.19){ctx.save();ctx.globalAlpha*=1-seg(t,.17,.19);ctx.strokeStyle=C.accent;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(scan,156);ctx.lineTo(scan,228);ctx.stroke();ctx.restore();}
+  // ② candidates → MHC fit test
+  const slots=[[360,150],[360,190],[360,230],[360,270]];
+  const fitK=ease(seg(t,.27,.33));
+  [4,9,13,-1].forEach((mi,j)=>{
+    const ii=mi<0?-1:MUT[mi][1];
+    const fly=ease(seg(t,.18+j*.015,.25+j*.015));
+    if(fly<=0)return;
+    const sx=mi<0?360:SX(mi),sy=mi<0?300:176;
+    let x=lerp(sx,slots[j][0],fly),y=lerp(sy,slots[j][1],fly);
+    // MHC cup
+    ctx.save();ctx.globalAlpha*=seg(t,.24,.27);rec(452,slots[j][1],-1,18,C.mhc,'cup');ctx.restore();
+    if(ii>=0){x=lerp(x,422,fitK);}
+    else{x=lerp(x,402,fitK)-14*Math.sin(Math.PI*seg(t,.31,.35));}
+    let a=1;
+    if(ii>=0)a=1-seg(t,.36,.38);else a=1-seg(t,.34,.37);
+    neo(x,y,ii,9,a*(ii<0?1:1));
+    if(t>.33&&t<.38){ctx.save();ctx.globalAlpha*=win(t,.33,.38,.01);label(ii>=0?'✓':'✗',474,slots[j][1],ii>=0?C.good:C.bad,{size:18,weight:900});ctx.restore();}
+  });
+  ctx.save();ctx.globalAlpha*=seg(t,.24,.27)*(1-seg(t,.4,.44));label('MHC',452,302,C.mhc,{mono:true,size:13});ctx.restore();
+  // ③ vial
+  const vx=590,vy=190;
+  ctx.save();ctx.globalAlpha*=seg(t,.35,.38);
+  ctx.fillStyle=mix(C.drug,C.stagebg,.85);ctx.strokeStyle=C.drug;ctx.lineWidth=2.5;ctx.beginPath();ctx.roundRect(vx-24,vy-36,48,78,10);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.drug;ctx.fillRect(vx-16,vy-48,32,12);
+  label('疫苗（胜肽或 mRNA）',vx,vy+64,C.drug,{size:13,weight:700});
+  ctx.restore();
+  [0,1,2].forEach(i=>{const f=ease(seg(t,.37+i*.015,.44+i*.015));if(f<=0)return;
+    const inj=ease(seg(t,.47,.53));
+    let x=lerp(422,vx-12+i*12,f),y=lerp(slots[i][1],vy+8+(i%2)*12,f);
+    x=lerp(x,DC6.x+(i-1)*14,inj);y=lerp(y,DC6.y-DC6.R+10,inj);
+    neo(x,y,i,7,1-seg(t,.53,.56));});
+  if(t>.45&&t<.54){ctx.save();ctx.globalAlpha*=win(t,.45,.54,.01);ctx.setLineDash([6,6]);ctx.strokeStyle=C.drug;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(vx,vy+44);ctx.lineTo(DC6.x+10,DC6.y-DC6.R-6);ctx.stroke();ctx.restore();}
+  // ④ dendritic cell
+  ctx.save();ctx.globalAlpha*=seg(t,.42,.47);
+  const dcs=mix(C.dc,C.stagebg,.74);
+  [2.2,2.9,3.6,4.3,1.5,5.0].forEach((a,i)=>{const L=DC6.R+28+7*Math.sin(clock*.8+i);for(const [w,c] of [[26,C.dc],[20,dcs]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(DC6.x,DC6.y);ctx.lineTo(DC6.x+Math.cos(a)*L,DC6.y+Math.sin(a)*L);ctx.stroke();}});
+  drawCell(DC6.x,DC6.y,DC6.R,C.dc,.9);
+  label('樹突細胞',DC6.x-40,DC6.y+DC6.R+38,C.dc,{size:15,weight:700});
+  ctx.restore();
+  const show=seg(t,.55,.6);
+  [-.65,0,.65].forEach((a,i)=>{const mx=DC6.x+DC6.R*Math.cos(a),my=DC6.y+DC6.R*Math.sin(a);ctx.save();ctx.globalAlpha*=show;rec(mx,my,1,10,C.mhc,'cup');neo(mx+19,my,i,7);ctx.restore();});
+  // tumor & normal cell
+  const dmg=ease(seg(t,.85,.95));
+  ctx.save();ctx.globalAlpha*=seg(t,.55,.62);
+  drawCell(TUM6.x,TUM6.y,TUM6.R*(1-.2*dmg),C.tumor,1.1,{alpha:1-.55*dmg});
+  [Math.PI-.55,Math.PI,Math.PI+.55,-.5,.6].forEach((a,i)=>neo(TUM6.x+(TUM6.R+6)*Math.cos(a),TUM6.y+(TUM6.R+6)*Math.sin(a),i%3,7,1-dmg));
+  label('癌細胞（掛著新抗原）',950,112,C.tumor,{align:'right',size:14,weight:700});
+  drawCell(NORM6.x,NORM6.y,NORM6.R,C.macro,2.2);
+  label('正常細胞',NORM6.x,NORM6.y+NORM6.R+20,C.muted,{size:14,weight:700});
+  ctx.save();ctx.globalAlpha*=seg(t,.84,.88);label('沒有突變 → 不受攻擊',NORM6.x-6,NORM6.y+NORM6.R+40,C.muted,{size:13});ctx.restore();
+  ctx.restore();
+  // T cells
+  const act=seg(t,.62,.66);
+  for(let i=0;i<9;i++){
+    const p=i%3,gen=Math.floor(i/3);
+    let x,y,a=1;
+    if(gen===0){x=P0[p][0];y=P0[p][1];const m=ease(seg(t,.58,.63));x=lerp(x,PD[p][0],m);y=lerp(y,PD[p][1],m);a=seg(t,.5,.56);}
+    else{const st=.66+gen*.025,f=ease(seg(t,st,st+.06));if(f<=0)continue;x=PD[p][0];y=PD[p][1];a=f;}
+    const sp=ease(seg(t,.68,.75));
+    if(sp>0){x=lerp(x,PS[i][0],sp);y=lerp(y,PS[i][1],sp);}
+    const go=ease(seg(t,.76,.85));
+    if(go>0){x=lerp(x,PT[i][0],go);y=lerp(y,PT[i][1],go);}
+    const col=mix(C.tcellDim,C.tcell,act);
+    drawCell(x+3*Math.sin(clock+i),y+3*Math.cos(clock*1.2+i),18,col,i,{alpha:a,glow:act*.5});
+    neo(x-21,y,p,6,a);
+  }
+  ctx.save();ctx.globalAlpha*=seg(t,.5,.56)*(1-seg(t,.62,.66));label('還沒被訓練的 T 細胞',700,535,C.muted,{size:13});ctx.restore();
+  // granules
+  for(let i=0;i<14;i++){const st=.83+i*.007,p=seg(t,st,st+.06);if(p>0&&p<1){const s=PT[i%9];ctx.save();ctx.globalAlpha*=1-.4*p;ctx.fillStyle=C.granule;ctx.beginPath();ctx.arc(lerp(s[0],TUM6.x,p),lerp(s[1],TUM6.y,p),4.5,0,7);ctx.fill();ctx.restore();}}
+  // captions
+  pill('① 比對腫瘤和正常細胞的 DNA，找出突變',480,52,C.accent,win(t,.02,.18));
+  pill('② 電腦預測：哪些突變片段能被 MHC 掛出來',480,52,C.accent,win(t,.18,.36));
+  pill('③ 選中的新抗原做成疫苗，打進身體',480,52,C.drug,win(t,.36,.54));
+  pill('④ 樹突細胞吃下疫苗，把新抗原展示出來',480,52,C.dc,win(t,.54,.66));
+  pill('⑤ 認得這些形狀的 T 細胞被啟動、大量複製',480,52,C.tcell,win(t,.66,.77));
+  pill('⑥ T 細胞只包圍、攻擊掛著新抗原的癌細胞',480,52,C.tumor,win(t,.77,.95));
+  ctx.restore();
+}
+
+/* ---------- scene meta ---------- */
+const SC=[
+ {tab:'T 細胞怎麼殺癌',loop:7,
+  html:`<div class="who">第一幕・正常的免疫攻擊</div><h2>T 細胞怎麼殺死癌細胞</h2>
+  <p><span class="term c-tcell">T 細胞</span>是免疫系統的殺手。它表面有 <span class="term">TCR</span>（T 細胞受體），作用像一把鑰匙。</p>
+  <p>癌細胞會把突變蛋白質的碎片（<b>抗原</b>）放在 <span class="term c-tumor">MHC</span> 分子上，掛在細胞表面。鑰匙對上鎖，T 細胞就確認「這是敵人」，接著射出<b>穿孔素</b>和<b>顆粒酶</b>，在癌細胞膜上打洞，讓它啟動自毀程序（凋亡）。</p>
+  <p>身體每天都靠這套機制清除異常細胞。問題是，長成腫瘤的癌細胞，都學會了躲過這套機制的方法。</p>`,
+  watch:['<b>T 細胞</b>從左邊靠近癌細胞','TCR 對上 MHC 時出現綠色閃光','黃色小顆粒（穿孔素、顆粒酶）射進癌細胞','癌細胞裂開、萎縮']},
+ {tab:'PD-1 煞車',loop:8,
+  html:`<div class="who">第二幕・本庶佑的發現（1992 年）</div><h2>PD-1：被癌細胞偷踩的煞車</h2>
+  <p>為了不誤傷自己，T 細胞身上裝了「煞車」受體 <span class="term c-pd1">PD-1</span>。正常組織表面有 <span class="term c-pdl1">PD-L1</span>，跟 PD-1 一接上，就是在說「我是自己人，別打」。</p>
+  <p>很多癌細胞學會偽裝，在表面大量放出 PD-L1。T 細胞明明認出了敵人，卻被踩下煞車，只好停火。</p>
+  <p>按下 <b class="c-drug">注射 nivolumab</b>：這是專門抓 PD-1 的抗體（圖中藍色 Y 字形）。它先把 PD-1 蓋住，PD-L1 就接不上，煞車失靈，T 細胞恢復攻擊。</p>`,
+  watch:['先不用藥：紅色閃光表示 PD-L1 接上了 PD-1','T 細胞變灰、往後退，表示停火','再按「注射 nivolumab」比較','藍色抗體先黏住 PD-1，攻擊恢復']},
+ {tab:'CTLA-4 煞車',loop:9,
+  html:`<div class="who">第三幕・Allison 的發現（1990 年代）</div><h2>CTLA-4：淋巴結裡的另一個煞車</h2>
+  <p>T 細胞上戰場前，要先在淋巴結被<span class="term" style="color:var(--dc)">樹突細胞</span>「啟動」，而且需要兩個訊號：TCR 認出抗原（訊號一），加上 <span class="term c-cd28">CD28</span> 接上 <span class="term c-b7">B7</span>（訊號二，等於踩油門）。</p>
+  <p>T 細胞身上還有 <span class="term c-ctla4">CTLA-4</span>，它抓 B7 的力氣比 CD28 大得多。CTLA-4 一把 B7 搶走，油門就踩不下去，T 細胞不會大量複製。</p>
+  <p>按下 <b class="c-drug">注射 ipilimumab</b>：這個抗體堵住 CTLA-4，B7 只好去接 CD28。T 細胞被完整啟動，複製出一大批專打這個癌症的殺手。</p>`,
+  watch:['看金色的 B7 最後接到誰','不用藥：B7 被長長的紅色 CTLA-4 搶走','用藥：B7 接上綠色 CD28','T 細胞活化後分裂成一群']},
+ {tab:'三藥合併',loop:0,
+  html:`<div class="who">第四幕・Scolyer 用的組合</div><h2>三個煞車一起放開</h2>
+  <p>Scolyer 開刀前打的三種抗體，各擋一個煞車：</p>
+  <p><span class="term c-drug">nivolumab</span> 擋 <span class="term c-pd1">PD-1</span>、<span class="term c-drug">ipilimumab</span> 擋 <span class="term c-ctla4">CTLA-4</span>、<span class="term c-drug">relatlimab</span> 擋 <span class="term c-lag3">LAG-3</span>。LAG-3 是第三種煞車，常和 PD-1 一起出現在打太久、累了的 T 細胞身上。</p>
+  <p>三種煞車作用在不同階段，合併使用效果可能比單用更好。代價是副作用也會變多：放開煞車的免疫系統，可能連正常的腸道、肝臟、甲狀腺都攻擊。</p>`,
+  watch:['在下方勾選一種或多種藥','比較 T 細胞數量、顏色和攻擊力條','三種一起勾，癌細胞消失得最快','強度只是示意，不是臨床數據']},
+ {tab:'腦癌與術前用藥',loop:0,
+  html:`<div class="who">第五幕・為什麼腦癌特別難</div><h2>血腦屏障、冷腫瘤，和「先打藥再開刀」</h2>
+  <p><b>血腦屏障</b>：腦部血管內壁細胞接得很緊，保護大腦，但也擋住大部分免疫細胞和體積很大的抗體藥物。</p>
+  <p><b>冷腫瘤</b>：膠質母細胞瘤的突變比較少，T 細胞不容易認出它。它還會分泌壓抑免疫的物質，招來<b>抑制型巨噬細胞</b>。T 細胞進得少，進去了也被壓制。單用 PD-1 抑制劑的大型試驗，大多沒有延長病人的存活時間。</p>
+  <p><b>術前用藥（新輔助治療）</b>：趁整顆腫瘤還在，讓它身上所有的抗原都拿來訓練 T 細胞。被活化的 T 細胞穿過血腦屏障，湧進腫瘤。接著開刀切除，留下來的 T 細胞繼續追殺手術刀切不到的殘餘癌細胞。這是 Scolyer 與 Long 在黑色素瘤上研究多年的策略。</p>`,
+  watch:['先不用藥：腫瘤是冷的藍灰色，T 細胞很少','按「術前給藥」：更多 T 細胞穿過血管壁，腫瘤變熱','再按「手術切除」：腫瘤移除，留下小顆殘餘癌細胞','比較有沒有術前用藥時，殘餘癌細胞的下場']},
+ {tab:'個人化癌症疫苗',loop:15,
+  html:`<div class="who">第六幕・Scolyer 的另一項武器</div><h2>個人化癌症疫苗：給 T 細胞一張通緝照</h2>
+  <p>檢查點抑制劑負責<b>放開煞車</b>，但 T 細胞還得知道要打誰。膠質母細胞瘤的突變少，T 細胞不容易認出它。個人化疫苗補的就是這一塊：把<b>這位病人</b>腫瘤獨有的目標，直接指給 T 細胞看。</p>
+  <p><b>怎麼做</b>：把切下的腫瘤和正常血液細胞都做基因定序，比對出只有癌細胞才有的突變。突變會做出身體原本沒有的蛋白質片段，叫做<b>新抗原</b>。電腦再預測哪些片段能被 <span class="term c-pdl1">MHC</span> 掛到細胞表面，挑出十幾到幾十個，做成胜肽或 mRNA 疫苗。</p>
+  <p><b>怎麼起作用</b>：疫苗打進身體後，樹突細胞把新抗原展示出來，訓練出專門辨認它們的 T 細胞。正常細胞沒有這些突變，所以攻擊會集中在癌細胞上。</p>
+  <p>除了術前三藥，Scolyer 也接受了依照自己腫瘤基因製作的個人化疫苗，和檢查點抑制劑一起用：疫苗負責瞄準，抑制劑負責放開煞車。</p>
+  <p class="caveat"><b>研究現況</b>：2018 年《Nature》刊出兩項膠質母細胞瘤的早期試驗，證實這類疫苗能讓 T 細胞進入腫瘤。試驗也發現，腦瘤病人常用來消腫的類固醇會削弱疫苗效果。黑色素瘤方面，mRNA 個人化疫苗（mRNA-4157）合併 pembrolizumab 的二期試驗，復發或死亡風險降低了約四成。更大規模的三期試驗仍在進行。</p>`,
+  watch:['左上：掃描線找出腫瘤 DNA 和正常 DNA 不一樣的字母','三種彩色形狀代表三個新抗原；灰色圓形放不進 MHC，被淘汰','新抗原裝進疫苗瓶，打進身體交給樹突細胞','T 細胞旁的小形狀代表它認得的新抗原。最後它們只包圍癌細胞，正常細胞沒事']}
+];
+
+/* ---------- UI ---------- */
+const tabsEl=document.getElementById('tabs'),textEl=document.getElementById('text'),watchEl=document.getElementById('watch'),togEl=document.getElementById('toggles');
+const playBtn=document.getElementById('play'),scrub=document.getElementById('scrub');
+SC.forEach((s,i)=>{const b=document.createElement('button');b.className='tab';b.type='button';b.role='tab';b.id='tab'+i;b.innerHTML=`<span class="n">第 ${i+1} 幕</span><span class="t">${s.tab}</span>`;b.onclick=()=>setScene(i);tabsEl.appendChild(b);});
+function syncPlay(){playBtn.textContent=playing?'暫停':'播放';}
+function mkToggle(text,get,set,cls=''){const b=document.createElement('button');b.type='button';b.className='toggle '+cls;b.setAttribute('aria-pressed',String(get()));b.innerHTML=`<span class="dot" aria-hidden="true"></span>${text}`;
+  b.onclick=()=>{set(!get());b.setAttribute('aria-pressed',String(get()));if(SC[scene].loop)phase=0;playing=true;syncPlay();};togEl.appendChild(b);}
+function buildControls(){
+  togEl.innerHTML='';
+  if(scene===0)togEl.innerHTML='<span class="note">這一幕還沒用藥，先看正常的免疫攻擊。</span>';
+  if(scene===1)mkToggle('注射 nivolumab（抗 PD-1）',()=>state.nivo,v=>state.nivo=v);
+  if(scene===2)mkToggle('注射 ipilimumab（抗 CTLA-4）',()=>state.ipi,v=>state.ipi=v);
+  if(scene===3){mkToggle('nivolumab（抗 PD-1）',()=>state.c4.nivo,v=>state.c4.nivo=v);mkToggle('ipilimumab（抗 CTLA-4）',()=>state.c4.ipi,v=>state.c4.ipi=v);mkToggle('relatlimab（抗 LAG-3）',()=>state.c4.rela,v=>state.c4.rela=v);}
+  if(scene===4){mkToggle('術前給藥（三種抑制劑）',()=>state.s5.drug,v=>state.s5.drug=v);mkToggle('手術切除腫瘤',()=>state.s5.surgery,v=>{state.s5.surgery=v;S5.res=makeRes();},'surgery');}
+  scrub.hidden=!SC[scene].loop;
+}
+function setScene(i){
+  scene=i;phase=reduce&&SC[i].loop?.7:0;
+  if(i===4)reset5();
+  [...tabsEl.children].forEach((b,j)=>b.setAttribute('aria-selected',String(j===i)));
+  textEl.innerHTML=SC[i].html;watchEl.innerHTML=SC[i].watch.map(w=>`<li>${w}</li>`).join('');
+  document.getElementById('next').textContent=i<SC.length-1?`下一幕：${SC[i+1].tab} →`:'回到第一幕';
+  buildControls();
+}
+playBtn.onclick=()=>{playing=!playing;syncPlay();};
+document.getElementById('restart').onclick=()=>{phase=0;if(scene===4)reset5();if(scene===3){actS=.1;}playing=true;syncPlay();};
+scrub.addEventListener('input',()=>{phase=scrub.value/1000;playing=false;syncPlay();});
+document.getElementById('next').onclick=()=>{setScene((scene+1)%SC.length);document.getElementById('tabs').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});};
+
+if(reduce)playing=false;
+setScene(0);syncPlay();
+
+/* ---------- loop ---------- */
+let last=performance.now(),fc=0;
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(++fc%30===0)readTokens();
+  if(playing){clock+=dt;const L=SC[scene].loop;if(L){phase+=dt/L;if(phase>=1)phase-=1;}}
+  if(SC[scene].loop&&playing)scrub.value=Math.round(phase*1000);
+  ctx.setTransform(S,0,0,S,0,0);ctx.globalAlpha=1;
+  ctx.fillStyle=C.stagebg;ctx.fillRect(0,0,W,H);
+  try{
+    if(scene===0)sceneAttack(phase,false);
+    else if(scene===1)sceneAttack(phase,true);
+    else if(scene===2)scenePrime(phase);
+    else if(scene===3)sceneCombo(playing?dt:0);
+    else if(scene===4)scene5(dt);
+    else scene6(phase);
+  }catch(e){console.error(e);}
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
